@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent-koderen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Black+Ops+One&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --desk: #2f3b33;
+    --folder: #e2c98f;
+    --folder-edge: #c9ab68;
+    --paper: #fbf7ec;
+    --ink: #1f1d1a;
+    --muted: #6b6356;
+    --stamp: #b3261e;
+    --line: #d9cfb8;
+    --focus: #1d5fa8;
+  }
+  html, body { background: var(--desk); }
+  body {
+    color: var(--ink);
+    font-family: "Courier Prime", "Courier New", monospace;
+    font-size: 16px;
+    padding-inline: 16px;
+    padding-block: 28px 48px;
+  }
+  .folder {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--folder);
+    border: 1px solid var(--folder-edge);
+    border-radius: 4px 14px 4px 4px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  }
+  .tab-label {
+    position: absolute; top: -26px; left: 22px;
+    background: var(--folder); border: 1px solid var(--folder-edge); border-bottom: none;
+    border-radius: 8px 8px 0 0; padding: 4px 16px;
+    font-family: "Special Elite", monospace; font-size: 13px; letter-spacing: .12em; color: var(--muted);
+  }
+  .paper {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 24px clamp(16px, 4vw, 36px) 28px;
+    position: relative;
+    display: grid; gap: 22px;
+  }
+  header { display: grid; gap: 6px; }
+  h1 {
+    font-family: "Black Ops One", "Impact", sans-serif;
+    font-weight: 400; font-size: clamp(34px, 7vw, 52px); line-height: 1;
+    margin: 0; letter-spacing: .02em; text-wrap: balance;
+  }
+  .sub { font-family: "Special Elite", monospace; color: var(--muted); margin: 0; max-width: 46ch; }
+  .stamp {
+    position: absolute; top: 18px; right: 14px;
+    font-family: "Black Ops One", sans-serif; color: var(--stamp);
+    border: 3px solid var(--stamp); padding: 4px 10px; font-size: 15px; letter-spacing: .1em;
+    transform: rotate(8deg); opacity: .8; pointer-events: none;
+  }
+  @media (max-width: 520px) { .stamp { position: static; justify-self: start; transform: rotate(-3deg); } }
+
+  .mode { display: flex; gap: 0; border: 2px solid var(--ink); width: fit-content; max-width: 100%; }
+  .mode button {
+    font: 700 16px "Courier Prime", monospace; padding: 10px 18px; border: 0;
+    background: transparent; color: var(--ink); cursor: pointer;
+  }
+  .mode button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  label.field { display: grid; gap: 6px; font-family: "Special Elite", monospace; font-size: 14px; letter-spacing: .08em; color: var(--muted); }
+  textarea {
+    font: 18px/1.5 "Courier Prime", monospace; color: var(--ink);
+    background: repeating-linear-gradient(var(--paper) 0 26px, var(--line) 26px 27px);
+    border: 1px solid var(--line); padding: 8px 10px; min-height: 90px; resize: vertical; width: 100%; box-sizing: border-box;
+  }
+
+  .key { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .dial { display: flex; align-items: center; border: 2px solid var(--ink); }
+  .dial button {
+    width: 44px; height: 44px; border: 0; background: var(--ink); color: var(--paper);
+    font: 700 22px "Courier Prime", monospace; cursor: pointer;
+  }
+  .dial input {
+    width: 64px; height: 44px; border: 0; text-align: center; background: var(--paper); color: var(--ink);
+    font: 700 24px "Courier Prime", monospace; font-variant-numeric: tabular-nums; -moz-appearance: textfield;
+  }
+  .dial input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .hint { font-size: 14px; color: var(--muted); }
+
+  .wheel-wrap { overflow-x: auto; }
+  .wheel { display: grid; grid-template-columns: repeat(29, 26px); font: 700 15px "Courier Prime", monospace; text-align: center; width: max-content; }
+  .wheel span { padding: 4px 0; border-right: 1px solid var(--line); }
+  .wheel .top { color: var(--muted); }
+  .wheel .bot { color: var(--stamp); border-top: 1px dashed var(--muted); }
+  .wheel .hit { background: #f3e2a6; }
+
+  .result {
+    border: 2px dashed var(--ink); padding: 14px 16px; display: grid; gap: 12px; background: #fffdf6;
+  }
+  .result .label { font-family: "Special Elite", monospace; font-size: 14px; letter-spacing: .08em; color: var(--muted); }
+  .result output { font: 700 22px/1.45 "Courier Prime", monospace; word-break: break-word; min-height: 1.45em; }
+  .copy {
+    justify-self: start; font: 700 16px "Courier Prime", monospace; padding: 10px 18px;
+    background: var(--stamp); color: #fff; border: 0; cursor: pointer;
+  }
+  .copy:active { transform: translateY(1px); }
+
+  .howto { border-top: 1px solid var(--line); padding-top: 18px; }
+  .howto h2 { font-family: "Special Elite", monospace; font-weight: 400; font-size: 20px; margin: 0 0 8px; }
+  .howto ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 62ch; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="folder">
+  <div class="tab-label">SAG NR. 009</div>
+  <div class="paper">
+    <div class="stamp">TOPHEMMELIG</div>
+    <header>
+      <h1>Agent-koderen</h1>
+      <p class="sub">Lav hemmelige beskeder, som kun agenter med den rigtige nøgle kan læse.</p>
+    </header>
+
+    <div class="mode" role="group" aria-label="Vælg funktion">
+      <button id="btn-enc" type="button" aria-pressed="true">Lav kode</button>
+      <button id="btn-dec" type="button" aria-pressed="false">Afkod</button>
+    </div>
+
+    <label class="field" for="msg"><span id="msg-label">SKRIV DIN BESKED</span>
+      <textarea id="msg" spellcheck="false">Mød mig ved træet i skolegården kl. 12</textarea>
+    </label>
+
+    <div class="key">
+      <span class="field" style="font-family:'Special Elite',monospace;font-size:14px;letter-spacing:.08em;color:var(--muted)">HEMMELIG NØGLE</span>
+      <div class="dial">
+        <button id="minus" type="button" aria-label="Nøgle en mindre">−</button>
+        <input id="key" type="number" value="3" min="1" max="28" aria-label="Hemmelig nøgle">
+        <button id="plus" type="button" aria-label="Nøgle en større">+</button>
+      </div>
+      <span class="hint">Din ven skal bruge samme nøgle.</span>
+    </div>
+
+    <div class="wheel-wrap" aria-hidden="true"><div class="wheel" id="wheel"></div></div>
+
+    <div class="result">
+      <span class="label" id="out-label">HEMMELIG KODE</span>
+      <output id="out" for="msg key"></output>
+      <button class="copy" id="copy" type="button">Kopiér</button>
+    </div>
+
+    <section class="howto">
+      <h2>Sådan sender du en hemmelig besked</h2>
+      <ol>
+        <li>Aftal en hemmelig nøgle med din ven, fx 7. Sig den kun ansigt til ansigt.</li>
+        <li>Skriv din besked under <b>Lav kode</b> og tryk <b>Kopiér</b>.</li>
+        <li>Send koden til din ven på sms, mail eller en seddel.</li>
+        <li>Din ven åbner Agent-koderen, vælger <b>Afkod</b>, sætter koden ind og bruger samme nøgle.</li>
+      </ol>
+    </section>
+  </div>
+</div>
+
+<script>
+  const ALFABET = "abcdefghijklmnopqrstuvwxyzæøå";
+  const N = ALFABET.length;
+  const msg = document.getElementById("msg");
+  const keyIn = document.getElementById("key");
+  const out = document.getElementById("out");
+  const wheel = document.getElementById("wheel");
+  const btnEnc = document.getElementById("btn-enc");
+  const btnDec = document.getElementById("btn-dec");
+  const copyBtn = document.getElementById("copy");
+  let decoding = false;
+  let lastPlain = "";
+
+  function shift(text, k) {
+    let r = "";
+    for (const ch of text) {
+      const low = ch.toLowerCase();
+      const i = ALFABET.indexOf(low);
+      if (i === -1) { r += ch; continue; }
+      const c = ALFABET[((i + k) % N + N) % N];
+      r += ch === low ? c : c.toUpperCase();
+    }
+    return r;
+  }
+
+  function getKey() {
+    let k = parseInt(keyIn.value, 10);
+    if (isNaN(k)) k = 0;
+    return ((k % N) + N) % N;
+  }
+
+  function drawWheel(k, used) {
+    let top = "", bot = "";
+    for (let i = 0; i < N; i++) {
+      const hit = used.has(ALFABET[i]) ? " hit" : "";
+      top += `<span class="top${hit}">${ALFABET[i].toUpperCase()}</span>`;
+      bot += `<span class="bot${hit}">${ALFABET[(i + k) % N].toUpperCase()}</span>`;
+    }
+    wheel.innerHTML = top + bot;
+  }
+
+  function update() {
+    const k = getKey();
+    const text = msg.value;
+    const res = decoding ? shift(text, -k) : shift(text, k);
+    out.textContent = res;
+    const plain = decoding ? res : text;
+    drawWheel(k, new Set(plain.toLowerCase()));
+    copyBtn.textContent = "Kopiér";
+  }
+
+  function setMode(dec) {
+    const current = out.textContent;
+    decoding = dec;
+    btnEnc.setAttribute("aria-pressed", String(!dec));
+    btnDec.setAttribute("aria-pressed", String(dec));
+    document.getElementById("msg-label").textContent = dec ? "SÆT DEN HEMMELIGE KODE IND" : "SKRIV DIN BESKED";
+    document.getElementById("out-label").textContent = dec ? "BESKEDEN ER" : "HEMMELIG KODE";
+    msg.value = current; // byt: resultatet bliver til input
+    update();
+  }
+
+  btnEnc.addEventListener("click", () => { if (decoding) setMode(false); });
+  btnDec.addEventListener("click", () => { if (!decoding) setMode(true); });
+  msg.addEventListener("input", update);
+  keyIn.addEventListener("input", update);
+  document.getElementById("minus").addEventListener("click", () => { keyIn.value = ((getKey() - 2 + N - 1) % (N - 1)) + 1; update(); });
+  document.getElementById("plus").addEventListener("click", () => { keyIn.value = (getKey() % (N - 1)) + 1; update(); });
+
+  copyBtn.addEventListener("click", () => {
+    const text = out.textContent;
+    const done = () => { copyBtn.textContent = "Kopieret!"; };
+    const fallback = () => {
+      const range = document.createRange(); range.selectNodeContents(out);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      copyBtn.textContent = "Markeret – tryk Ctrl+C";
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  update();
+</script>
+
+</html>
